@@ -68,7 +68,7 @@ python scripts/extract_wmpf_offsets.py --version 25047 --write --config-dir path
 
 将生成的 `addresses.{version}.json` 放入：
 
-- `nebula-tauri/frida/config/`
+- `x-debugger/frida/config/`
 - 或 `frida/config/`（WMPFDebugger 仓库）
 
 ## 验证
