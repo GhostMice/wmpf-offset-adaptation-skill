@@ -1,6 +1,6 @@
 # wmpf-offset-adaptation
 
-WMPF `flue.dll` Frida 偏移自动提取 Skill，适用于 [Nebula Debugger](https://github.com/nicedayzhu/nebula-debugger) / [WMPFDebugger](https://github.com/evi0s/WMPFDebugger) 的 `addresses.{version}.json` 适配。
+WMPF `flue.dll` Frida 偏移自动提取 Skill，适用于 [X Debugger](https://github.com/GhostMice/x-debugger) / [WMPFDebugger](https://github.com/evi0s/WMPFDebugger) 的 `addresses.{version}.json` 适配。
 
 ## 安装（Cursor Agent Skill）
 
