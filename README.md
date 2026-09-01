@@ -1,6 +1,13 @@
 # wmpf-offset-adaptation
 
-WMPF `flue.dll` Frida 偏移自动提取 Skill，适用于 [X Debugger](https://github.com/GhostMice/x-debugger) / [WMPFDebugger](https://github.com/evi0s/WMPFDebugger) 的 `addresses.{version}.json` 适配。
+WMPF Frida 偏移自动提取 Skill，适用于 [X Debugger](https://github.com/GhostMice/x-debugger) / [WMPFDebugger](https://github.com/evi0s/WMPFDebugger) 的 `addresses.{version}.json` 适配。
+
+支持两个平台：
+
+| 平台 | 目标模块 | 脚本 |
+|------|----------|------|
+| **Windows** | `flue.dll`（PE） | `extract_wmpf_offsets.py` |
+| **macOS ARM64** | `WeChatAppEx Framework`（Mach-O） | `extract_wmpf_offsets_darwin.py` |
 
 ## 安装（Cursor Agent Skill）
 
@@ -20,9 +27,11 @@ WMPF `flue.dll` Frida 偏移自动提取 Skill，适用于 [X Debugger](https://
 ~/.cursor/skills/wmpf-offset-adaptation/
 ├── SKILL.md
 ├── reference.md
+├── reference-darwin.md
 ├── README.md
 └── scripts/
-    └── extract_wmpf_offsets.py
+    ├── extract_wmpf_offsets.py          # Windows
+    └── extract_wmpf_offsets_darwin.py # macOS ARM64
 ```
 
 **仅当前项目**
@@ -35,11 +44,27 @@ cp -r wmpf-offset-adaptation-skill/wmpf-offset-adaptation .cursor/skills/
 
 ## 依赖
 
+**Windows**
+
 ```bash
 pip install pefile capstone
 ```
 
+**macOS**
+
+```bash
+pip install capstone
+```
+
+需要系统 `lipo`（Xcode Command Line Tools）。若 pip 遇 SSL 问题：
+
+```bash
+pip install capstone --trusted-host pypi.org --trusted-host files.pythonhosted.org
+```
+
 ## 快速使用
+
+### Windows（flue.dll）
 
 ```bash
 # 自动查找本机 WMPF 目录下的 flue.dll
@@ -55,7 +80,27 @@ python scripts/extract_wmpf_offsets.py --version 25047 --output addresses.25047.
 python scripts/extract_wmpf_offsets.py --version 25047 --write --config-dir path/to/frida/config
 ```
 
-## 输出示例（WMPF 25047）
+配置放入 `frida/config/addresses.25047.json`。
+
+### macOS ARM64（WeChatAppEx Framework）
+
+```bash
+# 自动读取 CFBundleVersion，提取 arm64 切片并输出
+python scripts/extract_wmpf_offsets_darwin.py \
+  -o frida/config/darwin/addresses.6.25529.json
+
+# 指定版本与 Framework 路径
+python scripts/extract_wmpf_offsets_darwin.py \
+  --version 6.25529 \
+  --framework "/Applications/WeChat.app/Contents/MacOS/WeChatAppEx.app/Contents/Frameworks/WeChatAppEx Framework.framework/Versions/C/WeChatAppEx Framework" \
+  -o addresses.6.25529.json
+```
+
+配置放入 `frida/config/darwin/addresses.{CFBundleVersion}.json`（WMPFDebugger darwin 布局）。
+
+## 输出示例
+
+**Windows WMPF 25047**
 
 ```json
 {
@@ -66,25 +111,36 @@ python scripts/extract_wmpf_offsets.py --version 25047 --write --config-dir path
 }
 ```
 
-将生成的 `addresses.{version}.json` 放入：
+**macOS WMPF 6.25529**
 
-- `x-debugger/frida/config/`
-- 或 `frida/config/`（WMPFDebugger 仓库）
+```json
+{
+    "Version": 6.25529,
+    "LoadStartHookOffset": "0x5720430",
+    "CDPFilterHookOffset": "0x92e76a8",
+    "SceneOffsets": [56, 1552, 8, 1488, 16, 456]
+}
+```
+
+值为 **RVA**（相对模块基址），不是 VA。darwin 的 `SceneOffsets[0]` 为 `56`，Windows 为 `64`，不可跨平台照搬。
 
 ## 验证
 
-1. 重启调试器
-2. 先启动调试，等待日志出现 `script loaded`
-3. 再打开微信小程序
-4. 浏览器访问 `devtools://devtools/bundled/inspector.html?ws=127.0.0.1:62000`
+1. 将 JSON 复制到调试器对应 config 目录
+2. 重启调试器
+3. 先启动调试，等待日志出现 `script loaded`
+4. 再打开微信小程序
+5. 浏览器访问 `devtools://devtools/bundled/inspector.html?ws=127.0.0.1:62000`
 
 ## 文件说明
 
 | 文件 | 说明 |
 |------|------|
-| `SKILL.md` | Cursor Agent 技能主文件 |
-| `reference.md` | 逆向算法与 IDA MCP 参考 |
-| `scripts/extract_wmpf_offsets.py` | 基于 PE `.pdata` 的自动化提取脚本 |
+| `SKILL.md` | Cursor Agent 技能主文件（含 Windows / macOS 流程） |
+| `reference.md` | Windows PE / flue.dll 逆向算法 |
+| `reference-darwin.md` | macOS ARM64 / WeChatAppEx Framework 逆向算法 |
+| `scripts/extract_wmpf_offsets.py` | Windows：基于 PE `.pdata` |
+| `scripts/extract_wmpf_offsets_darwin.py` | macOS：prologue 扫描 + ADRP/ADD xref |
 
 ## 发布
 
