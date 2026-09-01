@@ -1,4 +1,6 @@
-# WMPF 偏移提取 — 技术参考
+# WMPF 偏移提取 — Windows 技术参考
+
+> **macOS ARM64**（`WeChatAppEx Framework`）算法见 [reference-darwin.md](reference-darwin.md)。
 
 ## 依赖
 
